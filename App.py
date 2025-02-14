@@ -42,8 +42,13 @@ if uploaded_file is not None:
         st.success("✅ Transcripción enviada. Generando contenido optimizado...")
 
         # Obtener los resultados de la Web App de Google Sheets
-        response = requests.get(script_url)
-        contenido = response.text
+response = requests.get(script_url)
+contenido = response.text
+
+# Agregar un print para ver la respuesta real
+st.write("🔍 Debug: Respuesta de Google Sheets")
+st.text(contenido)
+
 
         # Mostrar la transcripción y los fragmentos optimizados
         st.subheader("📜 Transcripción:")
