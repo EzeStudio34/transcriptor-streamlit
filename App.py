@@ -86,13 +86,12 @@ st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
 st.text_area("Partes Clave", partes_interesantes, height=150, key="partes_interesantes_area")
 
 
-            # Botón para descargar los resultados
-            with open("contenido_redes_sociales.txt", "w") as f:
-                f.write(contenido)
+            # Guardar los resultados en un archivo descargable
+with open("contenido_redes_sociales.txt", "w") as f:
+    f.write(contenido)
 
-            st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
+st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
 
-            # Eliminar el archivo temporal
-            os.remove(temp_file_path)
-        else:
-            st.error(f"❌ Error en la transcripción. Código de error: {response.status_code}")
+# Eliminar el archivo temporal
+os.remove(temp_file_path)
+
