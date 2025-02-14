@@ -19,7 +19,10 @@ uploaded_file = st.file_uploader("📤 Sube tu archivo de audio", type=["mp3", "
 duracion = st.slider("⏳ Duración deseada del video (en segundos)", 15, 120, 60)
 tematica = st.text_input("🎯 Especifica la temática del video", "Motivación, Educación, Entretenimiento...")
 
-# Procesar el audio
+# Variable inicial para la transcripción
+text_transcription = "No se ha generado ninguna transcripción."
+
+# Procesar el audio si se subió un archivo
 if uploaded_file is not None:
     with st.spinner("⏳ Procesando la transcripción con Whisper en la nube..."):
         # Guardar archivo temporalmente
@@ -36,62 +39,27 @@ if uploaded_file is not None:
         if response.status_code == 200:
             text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
             st.success("✅ Transcripción completada.")
-
-            # Mostrar la transcripción en la interfaz
-            st.subheader("📜 Transcripción:")
-            st.text_area("", text_transcription, height=200)
-
-            # Guardar la transcripción en un archivo descargable
-            with open("transcripcion.txt", "w") as f:
-                f.write(text_transcription)
-
-            st.download_button("📥 Descargar Transcripción", "transcripcion.txt")
-
-            # Eliminar el archivo temporal
-            os.remove(temp_file_path)
         else:
             st.error(f"❌ Error en la transcripción. Código de error: {response.status_code}")
 
+        # Enviar la transcripción a Google Sheets para análisis con ChatGPT
+        data = {"texto": text_transcription, "duracion": duracion, "tematica": tematica}
+        response = requests.post(script_url, json=data)
 
+        st.success("✅ Transcripción enviada. Generando contenido optimizado...")
 
+        # Obtener los resultados de la Web App de Google Sheets
+        response = requests.get(script_url)
+        contenido = response.text
 
-        # Verificar si la transcripción se generó correctamente
-        if response.status_code == 200:
-            text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
-            st.success("✅ Transcripción completada.")
+        # Dividir el contenido recibido en Timestamps y Partes Interesantes
+        contenido_dividido = contenido.split("\n\n")
+        timestamps = contenido_dividido[0] if len(contenido_dividido) > 0 else "No se encontraron timestamps."
+        partes_interesantes = contenido_dividido[1] if len(contenido_dividido) > 1 else "No se encontraron partes interesantes."
 
-            # Enviar la transcripción a Google Sheets para análisis con ChatGPT
-            data = {"texto": text_transcription, "duracion": duracion, "tematica": tematica}
-            response = requests.post(script_url, json=data)
+        # Mostrar los resultados en la interfaz con claves únicas
+        st.subheader("📜 Transcripción:")
+        st.text_area("Transcripción", text_transcription, height=200, key="transcripcion_area")
 
-            st.success("✅ Transcripción enviada. Generando contenido optimizado...")
-
-            # Obtener los resultados de la Web App de Google Sheets
-            response = requests.get(script_url)
-            contenido = response.text
-
-            # Dividir el contenido recibido en Timestamps y Partes Interesantes
-            contenido_dividido = contenido.split("\n\n")
-            timestamps = contenido_dividido[0] if len(contenido_dividido) > 0 else "No se encontraron timestamps."
-            partes_interesantes = contenido_dividido[1] if len(contenido_dividido) > 1 else "No se encontraron partes interesantes."
-
-            # Mostrar los resultados en la interfaz
-            st.subheader("📜 Transcripción:")
-st.text_area("Transcripción", text_transcription, height=200, key="transcripcion_area")
-
-st.subheader("⏳ Timestamps Generados:")
-st.text_area("Timestamps", timestamps, height=150, key="timestamps_area")
-
-st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
-st.text_area("Partes Clave", partes_interesantes, height=150, key="partes_interesantes_area")
-
-
-            # Guardar los resultados en un archivo descargable
-with open("contenido_redes_sociales.txt", "w") as f:
-    f.write(contenido)
-
-st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
-
-# Eliminar el archivo temporal
-os.remove(temp_file_path)
-
+        st.subheader("⏳ Timestamps Generados:")
+       
