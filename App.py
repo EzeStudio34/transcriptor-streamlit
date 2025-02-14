@@ -5,8 +5,7 @@ import os
 
 # Configurar la API de Hugging Face para Whisper
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-tiny"
-HEADERS = {"Authorization": "Bearer hf_xxxhf_LmINTwqzLCDdTzgurzeYpvlMpahgrHruUkxxx"}
-
+HEADERS = {"Authorization": "Bearer hf_xxxhf_LmINTwqzLCDdTzgurzeYpvlMpahgrHruUkxxx"}  # Reemplaza con tu API Key de Hugging Face
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
@@ -34,7 +33,7 @@ if uploaded_file is not None:
 
         # Verificar si la transcripción se generó correctamente
         if response.status_code == 200:
-            text_transcription = response.json()["text"]
+            text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
             st.success("✅ Transcripción completada.")
 
             # Enviar la transcripción a Google Sheets para análisis con ChatGPT
