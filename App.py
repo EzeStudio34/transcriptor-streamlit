@@ -5,7 +5,7 @@ import os
 
 # Configurar la API de Hugging Face para Whisper
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-tiny"
-HEADERS = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
+HEADERS = {"Authorization": "Bearer TU_API_KEY_HUGGINGFACE"}
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
