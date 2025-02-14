@@ -6,7 +6,7 @@ import time
 
 # Configurar la API de Replicate para Whisper
 REPLICATE_API_URL = "https://api.replicate.com/v1/predictions"
-HEADERS = {"Authorization": "Token r8_4veNTqGlY089oxfXkkmvgrx239EX8vj1QotZa"}  # Reemplaza con tu API Key de Replicate
+HEADERS = {"Authorization": "Token r8_H7DMSYNn6XQ6XyZ4r9T1o4h9FeACDFx2Lvpoa"}  # Reemplaza con tu API Key de Replicate
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
