@@ -38,7 +38,7 @@ if uploaded_file is not None:
             data = {
                 "version": "openai/whisper",
                 "input": {
-                    "audio": uploaded_file.getvalue().hex()  # Convierte el archivo a un formato válido
+                    "audio": f"data:audio/mpeg;base64,{uploaded_file.getvalue().hex()}"
                 }
             }
             response = requests.post(REPLICATE_API_URL, headers=HEADERS, json=data)
