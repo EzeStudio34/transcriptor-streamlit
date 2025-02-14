@@ -51,7 +51,7 @@ st.text(contenido)
 
 
         # Mostrar la transcripción y los fragmentos optimizados
-        st.subheader("📜 Transcripción:")
+st.subheader("📜 Transcripción:")
         st.text_area("", text_transcription, height=200)
 
         st.subheader("⏳ Timestamps Generados:")
