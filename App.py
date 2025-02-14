@@ -77,13 +77,14 @@ if uploaded_file is not None:
 
             # Mostrar los resultados en la interfaz
             st.subheader("📜 Transcripción:")
-            st.text_area("", text_transcription, height=200)
+st.text_area("Transcripción", text_transcription, height=200, key="transcripcion_area")
 
-            st.subheader("⏳ Timestamps Generados:")
-            st.text_area("", timestamps, height=150)
+st.subheader("⏳ Timestamps Generados:")
+st.text_area("Timestamps", timestamps, height=150, key="timestamps_area")
 
-            st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
-            st.text_area("", partes_interesantes, height=150)
+st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
+st.text_area("Partes Clave", partes_interesantes, height=150, key="partes_interesantes_area")
+
 
             # Botón para descargar los resultados
             with open("contenido_redes_sociales.txt", "w") as f:
