@@ -2,12 +2,11 @@ import streamlit as st
 import requests
 import tempfile
 import os
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
-
-# Configurar la URL de Google Colab para transcripción
-colab_url = "https://colab.research.google.com/drive/TU_ID_DEL_NOTEBOOK"
 
 st.title("🎬 Generador de Clips para Redes Sociales")
 
@@ -20,51 +19,31 @@ tematica = st.text_input("🎯 Especifica la temática del video", "Motivación,
 
 # Botón para procesar el audio
 if uploaded_file is not None:
-    with st.spinner("⏳ Procesando la transcripción en Google Colab..."):
+    with st.spinner("⏳ Subiendo archivo a Google Drive..."):
+        # Autenticación con Google Drive
+        gauth = GoogleAuth()
+        gauth.LocalWebserverAuth()
+        drive = GoogleDrive(gauth)
+
         # Guardar archivo temporalmente
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
             temp_file.write(uploaded_file.read())
             temp_file_path = temp_file.name
 
-        # Enviar el archivo a Google Colab para transcripción
-        with open(temp_file_path, "rb") as f:
-            response = requests.post(colab_url, files={"file": f})
+        # Subir el archivo a Google Drive
+        file_drive = drive.CreateFile({"title": uploaded_file.name})
+        file_drive.SetContentFile(temp_file_path)
+        file_drive.Upload()
 
-        # Obtener la transcripción desde Google Colab
-        text_transcription = response.text
+        # Obtener el ID del archivo subido
+        file_id = file_drive["id"]
 
-        st.success("✅ Transcripción completada. Enviando a ChatGPT para análisis...")
+        st.success(f"✅ Archivo subido a Google Drive con ID: {file_id}")
 
-        # Enviar la transcripción a Google Sheets para análisis con ChatGPT
-        data = {"texto": text_transcription, "duracion": duracion, "tematica": tematica}
-        response = requests.post(script_url, json=data)
+        # Generar el enlace para que Google Colab procese el archivo
+        colab_url = f"https://colab.research.google.com/drive/TU_ID_DEL_NOTEBOOK?file_id={file_id}"
 
-        st.success("✅ Transcripción enviada. Generando contenido optimizado...")
-
-        # Obtener los resultados de la Web App de Google Sheets
-        response = requests.get(script_url)
-        contenido = response.text
-
-        # Dividir el contenido recibido en Timestamps y Partes Interesantes
-        contenido_dividido = contenido.split("\n\n")
-        timestamps = contenido_dividido[0] if len(contenido_dividido) > 0 else "No se encontraron timestamps."
-        partes_interesantes = contenido_dividido[1] if len(contenido_dividido) > 1 else "No se encontraron partes interesantes."
-
-        # Mostrar los resultados en la interfaz
-        st.subheader("📜 Transcripción:")
-        st.text_area("", text_transcription, height=200)
-
-        st.subheader("⏳ Timestamps Generados:")
-        st.text_area("", timestamps, height=150)
-
-        st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
-        st.text_area("", partes_interesantes, height=150)
-
-        # Botón para descargar los resultados
-        with open("contenido_redes_sociales.txt", "w") as f:
-            f.write(contenido)
-
-        st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
+        st.markdown(f"📌 **Abre este enlace en Google Colab para procesar la transcripción:** [Abrir Colab]({colab_url})")
 
         # Eliminar el archivo temporal
         os.remove(temp_file_path)
