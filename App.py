@@ -28,9 +28,10 @@ if uploaded_file is not None:
             temp_file_path = temp_file.name
 
         # Enviar el archivo a Hugging Face para transcripción
-        with open(temp_file_path, "rb") as f:
+with open(temp_file_path, "rb") as f:
     files = {"file": (uploaded_file.name, f, "audio/mpeg")}
     response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, files=files)
+
 
         # Verificar si la transcripción se generó correctamente
         if response.status_code == 200:
