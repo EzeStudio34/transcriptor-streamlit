@@ -1,11 +1,13 @@
 import streamlit as st
 import requests
-import whisper
 import tempfile
 import os
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
+
+# Configurar la URL de Google Colab para transcripción
+colab_url = "https://colab.research.google.com/drive/TU_ID_DEL_NOTEBOOK"
 
 st.title("🎬 Generador de Clips para Redes Sociales")
 
@@ -18,16 +20,20 @@ tematica = st.text_input("🎯 Especifica la temática del video", "Motivación,
 
 # Botón para procesar el audio
 if uploaded_file is not None:
-    with st.spinner("⏳ Procesando la transcripción..."):
+    with st.spinner("⏳ Procesando la transcripción en Google Colab..."):
         # Guardar archivo temporalmente
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
             temp_file.write(uploaded_file.read())
             temp_file_path = temp_file.name
 
-        # Transcribir con Whisper
-        model = whisper.load_model("tiny")
-        result = model.transcribe(temp_file_path)
-        text_transcription = result["text"]
+        # Enviar el archivo a Google Colab para transcripción
+        with open(temp_file_path, "rb") as f:
+            response = requests.post(colab_url, files={"file": f})
+
+        # Obtener la transcripción desde Google Colab
+        text_transcription = response.text
+
+        st.success("✅ Transcripción completada. Enviando a ChatGPT para análisis...")
 
         # Enviar la transcripción a Google Sheets para análisis con ChatGPT
         data = {"texto": text_transcription, "duracion": duracion, "tematica": tematica}
@@ -54,6 +60,6 @@ if uploaded_file is not None:
             f.write(contenido)
 
         st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
-        
+
         # Eliminar el archivo temporal
         os.remove(temp_file_path)
