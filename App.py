@@ -32,6 +32,11 @@ with open(temp_file_path, "rb") as f:
     files = {"file": (uploaded_file.name, f, "audio/mpeg")}
     response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, files=files)
 
+    if response.status_code == 200:
+        text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
+        st.success("✅ Transcripción completada.")
+
+
 
         # Verificar si la transcripción se generó correctamente
         if response.status_code == 200:
