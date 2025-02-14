@@ -7,7 +7,7 @@ import os
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
 
 # Configurar la URL de Google Colab para transcripción
-colab_url = "https://colab.research.google.com/drive/https://colab.research.google.com/drive/1JHQty1cVG6c-klJ0PYtMJDCWRHfGSdm-?usp=sharing"
+colab_url = "https://colab.research.google.com/drive/TU_ID_DEL_NOTEBOOK"
 
 st.title("🎬 Generador de Clips para Redes Sociales")
 
@@ -42,23 +42,23 @@ if uploaded_file is not None:
         st.success("✅ Transcripción enviada. Generando contenido optimizado...")
 
         # Obtener los resultados de la Web App de Google Sheets
-response = requests.get(script_url)
-contenido = response.text
+        response = requests.get(script_url)
+        contenido = response.text
 
-# Agregar un print para ver la respuesta real
-st.write("🔍 Debug: Respuesta de Google Sheets")
-st.text(contenido)
+        # Dividir el contenido recibido en Timestamps y Partes Interesantes
+        contenido_dividido = contenido.split("\n\n")
+        timestamps = contenido_dividido[0] if len(contenido_dividido) > 0 else "No se encontraron timestamps."
+        partes_interesantes = contenido_dividido[1] if len(contenido_dividido) > 1 else "No se encontraron partes interesantes."
 
-
-        # Mostrar la transcripción y los fragmentos optimizados
-st.subheader("📜 Transcripción:")
+        # Mostrar los resultados en la interfaz
+        st.subheader("📜 Transcripción:")
         st.text_area("", text_transcription, height=200)
 
         st.subheader("⏳ Timestamps Generados:")
-        st.text_area("", contenido.split("\n\n")[0], height=150)
+        st.text_area("", timestamps, height=150)
 
         st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
-        st.text_area("", contenido.split("\n\n")[1], height=150)
+        st.text_area("", partes_interesantes, height=150)
 
         # Botón para descargar los resultados
         with open("contenido_redes_sociales.txt", "w") as f:
