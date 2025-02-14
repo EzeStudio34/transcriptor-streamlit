@@ -23,18 +23,35 @@ tematica = st.text_input("🎯 Especifica la temática del video", "Motivación,
 if uploaded_file is not None:
     with st.spinner("⏳ Procesando la transcripción con Whisper en la nube..."):
         # Guardar archivo temporalmente
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
-            temp_file.write(uploaded_file.read())
-            temp_file_path = temp_file.name
+        temp_file_path = f"/tmp/{uploaded_file.name}"
+
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(uploaded_file.getbuffer())
 
         # Enviar el archivo a Hugging Face para transcripción
-with open(temp_file_path, "rb") as f:
-    files = {"file": (uploaded_file.name, f, "audio/mpeg")}
-    response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, files=files)
+        with open(temp_file_path, "rb") as f:
+            files = {"file": (uploaded_file.name, f, "audio/mpeg")}
+            response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, files=files)
 
-    if response.status_code == 200:
-        text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
-        st.success("✅ Transcripción completada.")
+        if response.status_code == 200:
+            text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
+            st.success("✅ Transcripción completada.")
+
+            # Mostrar la transcripción en la interfaz
+            st.subheader("📜 Transcripción:")
+            st.text_area("", text_transcription, height=200)
+
+            # Guardar la transcripción en un archivo descargable
+            with open("transcripcion.txt", "w") as f:
+                f.write(text_transcription)
+
+            st.download_button("📥 Descargar Transcripción", "transcripcion.txt")
+
+            # Eliminar el archivo temporal
+            os.remove(temp_file_path)
+        else:
+            st.error(f"❌ Error en la transcripción. Código de error: {response.status_code}")
+
 
 
 
