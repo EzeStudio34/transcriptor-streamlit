@@ -7,7 +7,7 @@ import os
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
 
 # Configurar la URL de Google Colab para transcripción
-colab_url = "https://colab.research.google.com/drive/TU_ID_DEL_NOTEBOOK"
+colab_url = "https://colab.research.google.com/drive/https://colab.research.google.com/drive/1JHQty1cVG6c-klJ0PYtMJDCWRHfGSdm-?usp=sharing"
 
 st.title("🎬 Generador de Clips para Redes Sociales")
 
