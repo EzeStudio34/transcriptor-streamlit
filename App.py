@@ -25,7 +25,7 @@ if uploaded_file is not None:
             temp_file_path = temp_file.name
 
         # Transcribir con Whisper
-        model = whisper.load_model("small")
+        model = whisper.load_model("tiny")
         result = model.transcribe(temp_file_path)
         text_transcription = result["text"]
 
