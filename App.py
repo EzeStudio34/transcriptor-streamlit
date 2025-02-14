@@ -4,9 +4,9 @@ import tempfile
 import os
 import time
 
-# Configurar la API de Replicate para Whisper
-REPLICATE_API_URL = "https://api.replicate.com/v1/predictions"
-HEADERS = {"Authorization": "Token r8_H7DMSYNn6XQ6XyZ4r9T1o4h9FeACDFx2Lvpoa"}  # Reemplaza con tu API Key de Replicate
+# Configurar la API de AssemblyAI
+ASSEMBLYAI_API_URL = "https://api.assemblyai.com/v2/transcript"
+HEADERS = {"Authorization": "8f5c18f7060042baacac252cb9f9c6ad"}  # Reemplaza con tu API Key de AssemblyAI
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
@@ -23,43 +23,55 @@ tematica = st.text_input("🎯 Especifica la temática del video", "Motivación,
 # Variable inicial para la transcripción
 text_transcription = "No se ha generado ninguna transcripción."
 
+# Función para transcribir audio con AssemblyAI
+def transcribir_audio_assemblyai(audio_path):
+    """Envía un archivo de audio a AssemblyAI y obtiene la transcripción"""
+    with open(audio_path, "rb") as f:
+        response = requests.post(
+            ASSEMBLYAI_API_URL, headers=HEADERS, files={"audio": f}
+        )
+
+    if response.status_code == 200:
+        transcript_id = response.json()["id"]
+        return transcript_id
+    else:
+        return None
+
+# Función para obtener la transcripción procesada
+def obtener_transcripcion_assemblyai(transcript_id):
+    """Consulta el estado de la transcripción en AssemblyAI"""
+    url = f"{ASSEMBLYAI_API_URL}/{transcript_id}"
+    
+    for _ in range(10):  # Intentos de consulta cada 5 segundos
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200 and response.json()["status"] == "completed":
+            return response.json()["text"]
+        time.sleep(5)
+
+    return None
+
 # Procesar el audio si se subió un archivo
 if uploaded_file is not None:
-    with st.spinner("⏳ Procesando la transcripción con Replicate..."):
+    with st.spinner("⏳ Procesando la transcripción con AssemblyAI..."):
         # Guardar archivo temporalmente
         temp_file_path = f"/tmp/{uploaded_file.name}"
 
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(uploaded_file.getbuffer())
 
-        # Enviar el archivo a Replicate
-        with open(temp_file_path, "rb") as f:
-            files = {"audio": f}
-            data = {
-                "version": "openai/whisper",
-                "input": {
-                    "audio": f"data:audio/mpeg;base64,{uploaded_file.getvalue().hex()}"
-                }
-            }
-            response = requests.post(REPLICATE_API_URL, headers=HEADERS, json=data)
+        # Obtener el ID de la transcripción
+        transcript_id = transcribir_audio_assemblyai(temp_file_path)
 
-        if response.status_code == 200:
-            prediction_url = response.json()["urls"]["get"]
+        if transcript_id:
+            # Obtener la transcripción completa
+            text_transcription = obtener_transcripcion_assemblyai(transcript_id)
 
-            # Esperar a que Replicate procese el audio
-            for _ in range(10):  # Intentos de consulta cada 5 segundos
-                transcription_response = requests.get(prediction_url, headers=HEADERS)
-                if transcription_response.status_code == 200 and "output" in transcription_response.json():
-                    text_transcription = transcription_response.json()["output"]
-                    st.success("✅ Transcripción completada.")
-                    break
-                time.sleep(5)  # Espera antes de volver a consultar
-
-            if text_transcription == "No se ha generado ninguna transcripción.":
+            if text_transcription:
+                st.success("✅ Transcripción completada.")
+            else:
                 st.error("❌ Error: La transcripción no se completó a tiempo.")
-
         else:
-            st.error(f"❌ Error en la transcripción. Código de error: {response.status_code}")
+            st.error("❌ Error al enviar el archivo a AssemblyAI.")
 
         # Enviar la transcripción a Google Sheets para análisis con ChatGPT
         data = {"texto": text_transcription, "duracion": duracion, "tematica": tematica}
