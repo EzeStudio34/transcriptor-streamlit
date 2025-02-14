@@ -6,7 +6,7 @@ import time
 
 # Configurar la API de Replicate para Whisper
 REPLICATE_API_URL = "https://api.replicate.com/v1/predictions"
-HEADERS = {"Authorization": "Token r8_VXGMCuVia8j7ha2PpLBiMpadH1DjOTJ0AhSL2"}  # Reemplaza con tu API Key de Replicate
+HEADERS = {"Authorization": "Token r8_4veNTqGlY089oxfXkkmvgrx239EX8vj1QotZa"}  # Reemplaza con tu API Key de Replicate
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
@@ -36,7 +36,7 @@ if uploaded_file is not None:
         with open(temp_file_path, "rb") as f:
             files = {"audio": f}
             data = {
-                "version": "openai/whisper-1.0",
+                "version": "openai/whisper",
                 "input": {
                     "audio": f"data:audio/mpeg;base64,{uploaded_file.getvalue().hex()}"
                 }
