@@ -36,7 +36,7 @@ if uploaded_file is not None:
         with open(temp_file_path, "rb") as f:
             files = {"audio": f}
             data = {
-                "version": "openai/whisper",
+                "version": "openai/whisper-1.0",
                 "input": {
                     "audio": f"data:audio/mpeg;base64,{uploaded_file.getvalue().hex()}"
                 }
