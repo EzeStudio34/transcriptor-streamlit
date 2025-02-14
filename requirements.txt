@@ -1,6 +1,2 @@
-torch
-torchaudio
-openai-whisper
-ffmpeg-python
-requests
 streamlit
+requests
