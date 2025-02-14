@@ -2,10 +2,11 @@ import streamlit as st
 import requests
 import tempfile
 import os
+import time
 
-# Configurar la API de Hugging Face para Whisper
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-small"
-HEADERS = {"Authorization": "Bearer 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"}  # Reemplaza con tu API Key de Hugging Face
+# Configurar la API de Replicate para Whisper
+REPLICATE_API_URL = "https://api.replicate.com/v1/predictions"
+HEADERS = {"Authorization": "Token r8_at0bMX7XXtdycjBSwsf7SOlEUXGGPIs1H6oCu"}  # Reemplaza con tu API Key de Replicate
 
 # Configurar la URL de la Web App de Google Apps Script
 script_url = "https://script.google.com/macros/s/TU_NUEVA_URL_DEL_SCRIPT/exec"
@@ -24,21 +25,39 @@ text_transcription = "No se ha generado ninguna transcripción."
 
 # Procesar el audio si se subió un archivo
 if uploaded_file is not None:
-    with st.spinner("⏳ Procesando la transcripción con Whisper en la nube..."):
+    with st.spinner("⏳ Procesando la transcripción con Replicate..."):
         # Guardar archivo temporalmente
         temp_file_path = f"/tmp/{uploaded_file.name}"
 
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(uploaded_file.getbuffer())
 
-        # Enviar el archivo a Hugging Face para transcripción
+        # Enviar el archivo a Replicate
         with open(temp_file_path, "rb") as f:
-            files = {"file": (uploaded_file.name, f, "audio/mpeg")}
-            response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, files=files)
+            files = {"audio": f}
+            data = {
+                "version": "openai/whisper",
+                "input": {
+                    "audio": uploaded_file.getvalue().hex()  # Convierte el archivo a un formato válido
+                }
+            }
+            response = requests.post(REPLICATE_API_URL, headers=HEADERS, json=data)
 
         if response.status_code == 200:
-            text_transcription = response.json().get("text", "No se pudo obtener la transcripción.")
-            st.success("✅ Transcripción completada.")
+            prediction_url = response.json()["urls"]["get"]
+
+            # Esperar a que Replicate procese el audio
+            for _ in range(10):  # Intentos de consulta cada 5 segundos
+                transcription_response = requests.get(prediction_url, headers=HEADERS)
+                if transcription_response.status_code == 200 and "output" in transcription_response.json():
+                    text_transcription = transcription_response.json()["output"]
+                    st.success("✅ Transcripción completada.")
+                    break
+                time.sleep(5)  # Espera antes de volver a consultar
+
+            if text_transcription == "No se ha generado ninguna transcripción.":
+                st.error("❌ Error: La transcripción no se completó a tiempo.")
+
         else:
             st.error(f"❌ Error en la transcripción. Código de error: {response.status_code}")
 
@@ -62,4 +81,16 @@ if uploaded_file is not None:
         st.text_area("Transcripción", text_transcription, height=200, key="transcripcion_area")
 
         st.subheader("⏳ Timestamps Generados:")
-       
+        st.text_area("Timestamps", timestamps, height=150, key="timestamps_area")
+
+        st.subheader("🔥 Partes Más Impactantes para Redes Sociales:")
+        st.text_area("Partes Clave", partes_interesantes, height=150, key="partes_interesantes_area")
+
+        # Guardar los resultados en un archivo descargable
+        with open("contenido_redes_sociales.txt", "w") as f:
+            f.write(contenido)
+
+        st.download_button("📥 Descargar Resultados", "contenido_redes_sociales.txt")
+
+        # Eliminar el archivo temporal
+        os.remove(temp_file_path)
