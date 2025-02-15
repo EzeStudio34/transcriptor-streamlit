@@ -1,6 +1,8 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, db
+import whisper
+import tempfile
 import uuid  # Para generar IDs únicos
 
 # 🔹 Cargar credenciales desde Streamlit Secrets
@@ -8,18 +10,10 @@ firebase_creds = st.secrets["FIREBASE"]
 
 # 🔹 Inicializar Firebase usando las credenciales de Secrets
 if not firebase_admin._apps:
-    cred = credentials.Certificate(dict(firebase_creds))  # ✅ Solución al error de json.dumps
+    cred = credentials.Certificate(dict(firebase_creds))
     firebase_admin.initialize_app(cred, {"databaseURL": firebase_creds["databaseURL"]})
 
-st.title("🎬 Transcriptor con Firebase en Streamlit Cloud")
-
-# 🔹 Prueba rápida para verificar conexión a Firebase
-try:
-    ref = db.reference("/")
-    ref.set({"test": "Conexión exitosa con Firebase en Streamlit Cloud"})
-    st.success("✅ Firebase está funcionando correctamente.")
-except Exception as e:
-    st.error(f"❌ Error al conectar con Firebase: {e}")
+st.title("🎬 Transcriptor con Whisper y Firebase en Streamlit Cloud")
 
 # 🔹 Subir archivo de audio
 uploaded_file = st.file_uploader("📤 Sube tu archivo de audio", type=["mp3", "wav", "m4a"])
@@ -32,9 +26,18 @@ tematica = st.text_input("🎯 Especifica la temática del video", "Motivación,
 if uploaded_file is not None:
     st.write("⏳ Procesando la transcripción...")
 
-    # 🔹 Simulación de la transcripción (Aquí debes integrar Whisper o AssemblyAI)
-    transcripcion = "Ejemplo de transcripción generada a partir del audio."
-    
+    # 🔹 Guardar el archivo en un directorio temporal
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file.write(uploaded_file.read())
+        temp_audio_path = temp_file.name
+
+    # 🔹 Cargar el modelo de Whisper
+    model = whisper.load_model("tiny")  # Puedes cambiar a "base" o "small" para más precisión
+
+    # 🔹 Transcribir el audio
+    result = model.transcribe(temp_audio_path)
+    transcripcion = result["text"]
+
     # 🔹 Simulación de generación de timestamps
     timestamps = "[00:00:05] Introducción\n[00:01:20] Punto clave"
     partes_interesantes = "El momento más importante del video es..."
