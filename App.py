@@ -17,7 +17,7 @@ if not firebase_admin._apps:
 st.title("🎬 Transcriptor con Whisper API y Firebase en Streamlit Cloud")
 
 # 🔹 Obtener API Key de Hugging Face desde Secrets
-HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-tiny"
+HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v2"
 HF_API_KEY = st.secrets["HUGGINGFACE"]["API_KEY"]
 
 # 🔹 Subir archivo de audio
