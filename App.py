@@ -37,8 +37,8 @@ if uploaded_file is not None:
         temp_audio_path = temp_file.name
 
     # 🔹 Enviar el archivo a Hugging Face API para transcribirlo con reintentos
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    data = {"return_timestamps": True}  # ✅ Solución: Activar timestamps para audios largos
+    headers = {"Authorization": f"Bearer {HF_API_KEY}", "Content-Type": "application/json"}
+    data = {"return_timestamps": True}  # ✅ Asegura que la API interprete bien el formato
 
     transcripcion = "❌ No se pudo obtener la transcripción"
     max_retries = 5
@@ -46,7 +46,7 @@ if uploaded_file is not None:
 
     for i in range(max_retries):
         with open(temp_audio_path, "rb") as f:
-            response = requests.post(HF_API_URL, headers=headers, files={"file": f}, data=data)
+            response = requests.post(HF_API_URL, headers=headers, files={"file": f}, json=data)  # ✅ Usa `json=data`
 
         if response.status_code == 200:
             transcripcion = response.json()["text"]
