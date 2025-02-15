@@ -3,11 +3,13 @@ import yt_dlp
 import whisperx
 import tempfile
 import os
+import torch
 
 st.title("🎬 Transcriptor de YouTube con WhisperX")
 
-# 🔹 Ingresar URL de YouTube
-url = st.text_input("📹 Ingresa el enlace del video de YouTube")
+# 🔹 Cargar WhisperX con la configuración correcta
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = whisperx.load_model("large-v2", device)
 
 def descargar_audio_youtube(url):
     """Descarga el audio de un video de YouTube usando un User-Agent válido"""
@@ -35,11 +37,13 @@ def descargar_audio_youtube(url):
 def transcribir_audio_whisperx(audio_path):
     """Transcribe el audio descargado usando WhisperX"""
     try:
-        model = whisperx.load_model("large-v2", device="cpu")  # ✅ Usa CPU, si tienes GPU usa "cuda"
-        result = model.transcribe(audio_path)
+        result = model.transcribe(audio_path, return_timestamps=True)
         return result["text"]
     except Exception as e:
         return f"❌ Error en la transcripción: {e}"
+
+# 🔹 Ingresar URL de YouTube
+url = st.text_input("📹 Ingresa el enlace del video de YouTube")
 
 if url:
     st.write("⏳ Descargando audio...")
