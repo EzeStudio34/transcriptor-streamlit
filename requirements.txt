@@ -1,6 +1,6 @@
 streamlit
-firebase-admin
-requests
+yt-dlp
+whisperx
 torch
 torchaudio
 ffmpeg
