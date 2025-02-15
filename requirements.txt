@@ -4,3 +4,7 @@ whisperx
 torch
 torchaudio
 ffmpeg-python
+numpy
+soundfile
+tqdm
+transformers
