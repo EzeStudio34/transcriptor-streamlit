@@ -4,6 +4,7 @@ from firebase_admin import credentials, db
 import requests
 import tempfile
 import uuid  # Para generar IDs únicos
+import time  # Para manejar los reintentos
 
 # 🔹 Cargar credenciales desde Streamlit Secrets
 firebase_creds = st.secrets["FIREBASE"]
@@ -17,7 +18,7 @@ st.title("🎬 Transcriptor con Whisper API y Firebase en Streamlit Cloud")
 
 # 🔹 Obtener API Key de Hugging Face desde Secrets
 HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-tiny"
-HF_API_KEY = st.secrets["HUGGINGFACE"]["API_KEY"]  # ✅ Se obtiene desde Secrets
+HF_API_KEY = st.secrets["HUGGINGFACE"]["API_KEY"]
 
 # 🔹 Subir archivo de audio
 uploaded_file = st.file_uploader("📤 Sube tu archivo de audio", type=["mp3", "wav", "m4a"])
@@ -35,15 +36,27 @@ if uploaded_file is not None:
         temp_file.write(uploaded_file.read())
         temp_audio_path = temp_file.name
 
-    # 🔹 Enviar el archivo a Hugging Face API para transcribirlo
+    # 🔹 Enviar el archivo a Hugging Face API para transcribirlo con reintentos
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    with open(temp_audio_path, "rb") as f:
-        response = requests.post(HF_API_URL, headers=headers, files={"file": f})
+    data = {"return_timestamps": True}  # ✅ Solución: Activar timestamps para audios largos
 
-    if response.status_code == 200:
-        transcripcion = response.json()["text"]
-    else:
-        transcripcion = f"❌ Error en la transcripción: {response.text}"
+    transcripcion = "❌ No se pudo obtener la transcripción"
+    max_retries = 5
+    wait_time = 20  # Segundos de espera entre intentos
+
+    for i in range(max_retries):
+        with open(temp_audio_path, "rb") as f:
+            response = requests.post(HF_API_URL, headers=headers, files={"file": f}, data=data)
+
+        if response.status_code == 200:
+            transcripcion = response.json()["text"]
+            break
+        elif "is currently loading" in response.text:
+            st.warning(f"⚠️ El modelo está cargando. Reintentando en {wait_time} segundos... ({i+1}/{max_retries})")
+            time.sleep(wait_time)
+        else:
+            transcripcion = f"❌ Error en la transcripción: {response.text}"
+            break
 
     # 🔹 Simulación de generación de timestamps
     timestamps = "[00:00:05] Introducción\n[00:01:20] Punto clave"
