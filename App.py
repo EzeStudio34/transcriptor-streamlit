@@ -10,7 +10,7 @@ st.title("🎬 Transcriptor de YouTube con WhisperX")
 url = st.text_input("📹 Ingresa el enlace del video de YouTube")
 
 def descargar_audio_youtube(url):
-    """Descarga el audio de un video de YouTube"""
+    """Descarga el audio de un video de YouTube usando un User-Agent válido"""
     temp_dir = tempfile.gettempdir()
     audio_path = os.path.join(temp_dir, "youtube_audio.mp3")
 
@@ -18,18 +18,28 @@ def descargar_audio_youtube(url):
         "format": "bestaudio/best",
         "outtmpl": audio_path,
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}],
-        "quiet": True,  # ✅ Evita que muestre demasiada información en consola
+        "quiet": True,
+        "noprogress": True,
+        "nocheckcertificate": True,
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        try:
+            ydl.download([url])
+        except Exception as e:
+            raise Exception(f"❌ Error al descargar el video: {e}")
 
     return audio_path
 
 def transcribir_audio_whisperx(audio_path):
     """Transcribe el audio descargado usando WhisperX"""
-    model = whisperx.load_model("large-v2", device="cpu")  # ✅ Usa CPU, si tienes GPU usa "cuda"
-    result = model.transcribe(audio_path)
-    return result["text"]
+    try:
+        model = whisperx.load_model("large-v2", device="cpu")  # ✅ Usa CPU, si tienes GPU usa "cuda"
+        result = model.transcribe(audio_path)
+        return result["text"]
+    except Exception as e:
+        return f"❌ Error en la transcripción: {e}"
 
 if url:
     st.write("⏳ Descargando audio...")
