@@ -1,10 +1,13 @@
 streamlit
 yt-dlp
 whisperx
-torch
+torch==2.0.1
 torchaudio
 ffmpeg-python
 numpy
 soundfile
 tqdm
 transformers
+speechbrain
+pyannote.audio
+pyannote.database
