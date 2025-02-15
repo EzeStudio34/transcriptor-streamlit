@@ -1,16 +1,14 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, db
-import json
 import uuid  # Para generar IDs únicos
 
 # 🔹 Cargar credenciales desde Streamlit Secrets
 firebase_creds = st.secrets["FIREBASE"]
-firebase_creds_dict = json.loads(json.dumps(firebase_creds))
 
 # 🔹 Inicializar Firebase usando las credenciales de Secrets
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_creds_dict)
+    cred = credentials.Certificate(dict(firebase_creds))  # ✅ Solución al error de json.dumps
     firebase_admin.initialize_app(cred, {"databaseURL": firebase_creds["databaseURL"]})
 
 st.title("🎬 Transcriptor con Firebase en Streamlit Cloud")
