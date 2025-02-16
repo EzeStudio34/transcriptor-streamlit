@@ -1,14 +1,4 @@
 streamlit
-yt-dlp
-whisperx
-torch==2.2.0
-torchaudio
-ffmpeg-python
-numpy<2
-soundfile
-tqdm
-transformers
-speechbrain
-pyannote.audio
-pyannote.database
-pydub
+pysrt
+xmltodict
+lxml
