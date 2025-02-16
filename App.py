@@ -12,7 +12,9 @@ def select_segments_with_gpt(transcription, prompt, max_duration):
     """
     Sends the transcription and prompt to GPT-4 to select the best segments.
     """
-    response = openai.ChatCompletion.create(
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)  # Updated OpenAI Client Initialization
+
+    response = client.chat.completions.create(
         model="gpt-4-turbo",
         messages=[
             {"role": "system", "content": "You are a video editing expert. Select the most relevant segments based on the prompt and specified duration."},
@@ -20,7 +22,7 @@ def select_segments_with_gpt(transcription, prompt, max_duration):
         ],
         max_tokens=500
     )
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content  # Updated response handling
 
 def generate_premiere_xml(segments):
     """Generates an XML file compatible with Adobe Premiere."""
