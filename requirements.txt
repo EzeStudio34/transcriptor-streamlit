@@ -4,7 +4,7 @@ whisperx
 torch==2.2.0
 torchaudio
 ffmpeg-python
-numpy
+numpy<2
 soundfile
 tqdm
 transformers
