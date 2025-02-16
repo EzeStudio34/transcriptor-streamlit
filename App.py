@@ -31,13 +31,16 @@ def generate_premiere_xml(segments):
     sequence = ET.SubElement(root, "sequence")
     media = ET.SubElement(sequence, "media")
     video = ET.SubElement(media, "video")
+    track = ET.SubElement(video, "track")  # Adds a track to contain the clips
     
     for sub in segments:
-        clipitem = ET.SubElement(video, "clipitem")
+        clipitem = ET.SubElement(track, "clipitem")  # Assigns clips to the track
         ET.SubElement(clipitem, "name").text = sub.text.replace('\n', ' ')
         ET.SubElement(clipitem, "start").text = str(sub.start.ordinal // 1000)
         ET.SubElement(clipitem, "end").text = str(sub.end.ordinal // 1000)
-        ET.SubElement(clipitem, "file").text = "video_placeholder.mov"  # Generic placeholder file
+        
+        file_element = ET.SubElement(clipitem, "file")
+        ET.SubElement(file_element, "name").text = "Replace in Premiere"  # Placeholder for video file
     
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
