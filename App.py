@@ -33,10 +33,11 @@ def generate_premiere_xml(segments):
     video = ET.SubElement(media, "video")
     
     for sub in segments:
-        clip = ET.SubElement(video, "clip")
-        ET.SubElement(clip, "start").text = str(sub.start.ordinal / 1000)
-        ET.SubElement(clip, "end").text = str(sub.end.ordinal / 1000)
-        ET.SubElement(clip, "name").text = sub.text.replace('\n', ' ')
+        clipitem = ET.SubElement(video, "clipitem")
+        ET.SubElement(clipitem, "name").text = sub.text.replace('\n', ' ')
+        ET.SubElement(clipitem, "start").text = str(sub.start.ordinal // 1000)
+        ET.SubElement(clipitem, "end").text = str(sub.end.ordinal // 1000)
+        ET.SubElement(clipitem, "file").text = "video_placeholder.mov"  # Generic placeholder file
     
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
