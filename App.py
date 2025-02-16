@@ -3,26 +3,27 @@ import xml.etree.ElementTree as ET
 import pysrt
 import tempfile
 import os
-import openai
+import google.generativeai as genai
 
-# 🔹 Get OpenAI API Key from Secrets
-OPENAI_API_KEY = st.secrets["OPENAI"]["API_KEY"]
+# 🔹 Get Google Gemini API Key from Secrets
+GEMINI_API_KEY = st.secrets["GEMINI"]["API_KEY"]
 
-def select_segments_with_gpt(transcription, prompt, max_duration):
+# 🔹 Configure Google Gemini
+genai.configure(api_key=GEMINI_API_KEY)
+
+def select_segments_with_gemini(transcription, prompt, max_duration):
     """
-    Sends the transcription and prompt to GPT-4o to select the best segments.
+    Uses Google Gemini AI to analyze the transcription and extract the most relevant segments.
     """
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)  # Updated OpenAI Client Initialization
-
-    response = client.chat.completions.create(
-        model="gpt-4o",  # Updated to GPT-4o
-        messages=[
-            {"role": "system", "content": "You are a video editing expert. Select the most relevant segments based on the prompt and specified duration."},
-            {"role": "user", "content": f"Here is the transcription:\n\n{transcription}\n\nBased on the following prompt: \"{prompt}\", select the most relevant segments without exceeding {max_duration} seconds."}
-        ],
-        max_tokens=500
+    model = genai.GenerativeModel("gemini-pro")
+    
+    response = model.generate_content(
+        f"Here is a transcription:\n{transcription}\n\nBased on the following user request: '{prompt}', "
+        f"select the most relevant segments without exceeding {max_duration} seconds. "
+        f"Provide the timestamps and key dialogue from the text."
     )
-    return response.choices[0].message.content  # Updated response handling
+    
+    return response.text  # Returns the AI's response
 
 def generate_premiere_xml(segments):
     """Generates an XML file compatible with Adobe Premiere."""
@@ -55,7 +56,7 @@ if uploaded_file and prompt:
         full_transcription = "\n".join([sub.text.replace('\n', ' ') for sub in subs])
         
         try:
-            selected_segments = select_segments_with_gpt(full_transcription, prompt, max_duration)
+            selected_segments = select_segments_with_gemini(full_transcription, prompt, max_duration)
             if not selected_segments:
                 st.error("❌ No relevant segments found based on the prompt.")
             else:
