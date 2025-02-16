@@ -1,8 +1,8 @@
 import streamlit as st
+import xml.etree.ElementTree as ET
 import pysrt
 import tempfile
 import os
-import csv
 import google.generativeai as genai
 
 # 🔹 Get Google Gemini API Key from Secrets
@@ -10,6 +10,14 @@ GEMINI_API_KEY = st.secrets["GEMINI"]["API_KEY"]
 
 # 🔹 Configure Google Gemini
 genai.configure(api_key=GEMINI_API_KEY)
+
+# 🔹 Set App Title and Logo
+st.set_page_config(page_title="Video Editor AI Assistant", page_icon="🎬")
+
+# 🔹 Display Logo
+st.image("https://via.placeholder.com/300x100.png?text=Your+Logo+Here", use_column_width=True)
+
+st.title("🎬 Video Editor AI Assistant")
 
 def select_segments_with_gemini(transcription, prompt, max_duration):
     """
@@ -25,21 +33,25 @@ def select_segments_with_gemini(transcription, prompt, max_duration):
     
     return response.text  # Returns the AI's response
 
-def generate_premiere_csv(segments):
-    """Generates a CSV file compatible with Adobe Premiere markers."""
-    temp_csv_path = os.path.join(tempfile.gettempdir(), "premiere_markers.csv")
-    
-    with open(temp_csv_path, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Timecode", "Name", "Description"])
-        
-        for sub in segments:
-            start_time = f"{sub.start.hours:02}:{sub.start.minutes:02}:{sub.start.seconds:02}.{sub.start.milliseconds:03}"
-            writer.writerow([start_time, "Key Moment", sub.text.replace('\n', ' ')])
-    
-    return temp_csv_path
+def generate_premiere_fcpxml(segments):
+    """Generates an FCPXML file compatible with Adobe Premiere markers."""
+    root = ET.Element("fcpxml", version="1.8")
+    library = ET.SubElement(root, "library")
+    event = ET.SubElement(library, "event")
+    project = ET.SubElement(event, "project")
+    sequence = ET.SubElement(project, "sequence")
+    spine = ET.SubElement(sequence, "spine")
 
-st.title("🎬 Premiere CSV Marker Generator from SRT with AI")
+    for sub in segments:
+        marker = ET.SubElement(spine, "marker", start=f"{sub.start.ordinal // 1000}s", duration="1s")
+        marker.text = sub.text.replace("\n", " ")
+
+    temp_fcpxml_path = os.path.join(tempfile.gettempdir(), "premiere_markers.fcpxml")
+    
+    with open(temp_fcpxml_path, "w", encoding="utf-8") as file:
+        file.write(ET.tostring(root, encoding="utf-8").decode("utf-8"))
+    
+    return temp_fcpxml_path
 
 uploaded_file = st.file_uploader("📂 Upload your .srt file", type=["srt"])
 max_duration = st.slider("⏳ Maximum video duration (seconds)", 15, 90, 60)
@@ -59,12 +71,12 @@ if uploaded_file and prompt:
             if not selected_segments:
                 st.error("❌ No relevant segments found based on the prompt.")
             else:
-                csv_path = generate_premiere_csv(subs)
+                fcpxml_path = generate_premiere_fcpxml(subs)
                 
-                with open(csv_path, "r", encoding="utf-8") as csv_file:
-                    csv_content = csv_file.read()
+                with open(fcpxml_path, "r", encoding="utf-8") as fcpxml_file:
+                    fcpxml_content = fcpxml_file.read()
                 
-                st.success("✅ CSV file successfully generated for Premiere markers.")
-                st.download_button("⬇️ Download CSV for Premiere", data=csv_content, file_name="premiere_markers.csv", mime="text/csv")
+                st.success("✅ FCPXML file successfully generated for Premiere markers.")
+                st.download_button("⬇️ Download FCPXML for Premiere", data=fcpxml_content, file_name="premiere_markers.fcpxml", mime="application/xml")
         except Exception as e:
-            st.error(f"❌ Error generating CSV: {e}")
+            st.error(f"❌ Error generating FCPXML: {e}")
