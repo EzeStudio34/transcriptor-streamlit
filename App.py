@@ -3,26 +3,25 @@ import xml.etree.ElementTree as ET
 import pysrt
 import tempfile
 import os
+import openai
 
-def seleccionar_segmentos(subs, max_duracion, prompt):
+# 🔹 Obtener API Key de OpenAI desde Secrets
+OPENAI_API_KEY = st.secrets["OPENAI"]["API_KEY"]
+
+def seleccionar_segmentos_con_gpt(transcripcion, prompt, max_duracion):
     """
-    Selecciona los segmentos más relevantes basados en el prompt y la duración máxima.
+    Envía la transcripción y el prompt a GPT-4 para seleccionar los mejores segmentos.
     """
-    seleccionados = []
-    duracion_total = 0
-    
-    for sub in subs:
-        texto = sub.text.replace('\n', ' ')
-        duracion = (sub.end.ordinal - sub.start.ordinal) / 1000  # Duración en segundos
-        
-        if prompt.lower() in texto.lower():  # Filtra segmentos según el prompt
-            if duracion_total + duracion <= max_duracion:
-                seleccionados.append(sub)
-                duracion_total += duracion
-            else:
-                break  # Detiene la selección si se excede la duración máxima
-    
-    return seleccionados
+    response = openai.ChatCompletion.create(
+        model="gpt-4-turbo",
+        messages=[
+            {"role": "system", "content": "Eres un experto en edición de video. Selecciona los fragmentos más relevantes basados en el prompt y la duración especificada."},
+            {"role": "user", "content": f"Aquí está la transcripción:
+\n{transcripcion}\n\nBasado en el siguiente prompt: \"{prompt}\", selecciona los fragmentos más relevantes sin superar {max_duracion} segundos."}
+        ],
+        max_tokens=500
+    )
+    return response["choices"][0]["message"]["content"]
 
 def generar_xml_premiere(segmentos):
     """Genera un archivo XML compatible con Adobe Premiere."""
@@ -39,7 +38,7 @@ def generar_xml_premiere(segmentos):
     
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
-st.title("🎬 Generador de XML para Premiere desde SRT")
+st.title("🎬 Generador de XML para Premiere desde SRT con IA")
 
 uploaded_file = st.file_uploader("📂 Sube tu archivo .srt", type=["srt"])
 max_duracion = st.slider("⏳ Duración máxima del video (segundos)", 15, 90, 60)
@@ -51,12 +50,13 @@ if uploaded_file is not None:
         temp_srt_path = temp_srt.name
     
     subs = pysrt.open(temp_srt_path)
-    segmentos = seleccionar_segmentos(subs, max_duracion, prompt)
+    transcripcion_completa = "\n".join([sub.text.replace('\n', ' ') for sub in subs])
+    segmentos_gpt = seleccionar_segmentos_con_gpt(transcripcion_completa, prompt, max_duracion)
     
-    if not segmentos:
+    if not segmentos_gpt:
         st.error("❌ No se encontraron segmentos relevantes según el prompt.")
     else:
-        xml_content = generar_xml_premiere(segmentos)
+        xml_content = generar_xml_premiere(subs)
         temp_xml_path = os.path.join(tempfile.gettempdir(), "premiere_export.xml")
         with open(temp_xml_path, "w", encoding="utf-8") as xml_file:
             xml_file.write(xml_content)
