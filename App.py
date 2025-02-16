@@ -10,12 +10,12 @@ OPENAI_API_KEY = st.secrets["OPENAI"]["API_KEY"]
 
 def select_segments_with_gpt(transcription, prompt, max_duration):
     """
-    Sends the transcription and prompt to GPT-4 to select the best segments.
+    Sends the transcription and prompt to GPT-4o to select the best segments.
     """
     client = openai.OpenAI(api_key=OPENAI_API_KEY)  # Updated OpenAI Client Initialization
 
     response = client.chat.completions.create(
-        model="gpt-4-turbo",
+        model="gpt-4o",  # Updated to GPT-4o
         messages=[
             {"role": "system", "content": "You are a video editing expert. Select the most relevant segments based on the prompt and specified duration."},
             {"role": "user", "content": f"Here is the transcription:\n\n{transcription}\n\nBased on the following prompt: \"{prompt}\", select the most relevant segments without exceeding {max_duration} seconds."}
