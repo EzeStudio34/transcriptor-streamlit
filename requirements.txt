@@ -2,4 +2,4 @@ streamlit
 pysrt
 xmltodict
 lxml
-openai>=1.0.0
+google-generativeai
