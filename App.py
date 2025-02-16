@@ -28,19 +28,28 @@ def select_segments_with_gemini(transcription, prompt, max_duration):
 def generate_premiere_xml(segments):
     """Generates an XML file compatible with Adobe Premiere."""
     root = ET.Element("xmeml", version="4")
+    
+    # Create the sequence
     sequence = ET.SubElement(root, "sequence")
+    ET.SubElement(sequence, "name").text = "Generated Sequence"
+    
     media = ET.SubElement(sequence, "media")
     video = ET.SubElement(media, "video")
-    track = ET.SubElement(video, "track")  # Adds a track to contain the clips
+    track = ET.SubElement(video, "track")  # Track to hold clips
+    
+    # Create a bin (folder) for clips
+    bin_element = ET.SubElement(root, "bin")
+    ET.SubElement(bin_element, "name").text = "Imported Clips"
     
     for sub in segments:
-        clipitem = ET.SubElement(track, "clipitem")  # Assigns clips to the track
-        ET.SubElement(clipitem, "name").text = sub.text.replace('\n', ' ')
+        clipitem = ET.SubElement(track, "clipitem")
+        ET.SubElement(clipitem, "name").text = sub.text.replace("\n", " ")
         ET.SubElement(clipitem, "start").text = str(sub.start.ordinal // 1000)
         ET.SubElement(clipitem, "end").text = str(sub.end.ordinal // 1000)
         
+        # Define file reference for Premiere to request video manually
         file_element = ET.SubElement(clipitem, "file")
-        ET.SubElement(file_element, "name").text = "Replace in Premiere"  # Placeholder for video file
+        ET.SubElement(file_element, "name").text = "Replace in Premiere"
     
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
@@ -57,7 +66,7 @@ if uploaded_file and prompt:
             temp_srt_path = temp_srt.name
         
         subs = pysrt.open(temp_srt_path)
-        full_transcription = "\n".join([sub.text.replace('\n', ' ') for sub in subs])
+        full_transcription = "\n".join([sub.text.replace("\n", " ") for sub in subs])
         
         try:
             selected_segments = select_segments_with_gemini(full_transcription, prompt, max_duration)
