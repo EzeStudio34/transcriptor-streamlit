@@ -15,7 +15,8 @@ genai.configure(api_key=GEMINI_API_KEY)
 st.set_page_config(page_title="Video Editor AI Assistant", page_icon="🎬")
 
 # 🔹 Display Logo
-st.image("https://via.placeholder.com/300x100.png?text=Your+Logo+Here", use_column_width=True)
+logo_url = "https://drive.google.com/uc?export=view&id=1XlHZiaiMfskhQU23c8H8GyC-mq9FjwaN"
+st.image(logo_url, use_container_width=True)
 
 st.title("🎬 Video Editor AI Assistant")
 
@@ -71,6 +72,11 @@ if uploaded_file and prompt:
             if not selected_segments:
                 st.error("❌ No relevant segments found based on the prompt.")
             else:
+                # Display selected text preview without timestamps
+                st.subheader("📜 Selected Text Preview:")
+                selected_text = "\n\n".join([sub.text.replace("\n", " ") for sub in subs])
+                st.text_area("", selected_text, height=200)
+                
                 fcpxml_path = generate_premiere_fcpxml(subs)
                 
                 with open(fcpxml_path, "r", encoding="utf-8") as fcpxml_file:
