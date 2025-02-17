@@ -18,7 +18,7 @@ st.set_page_config(page_title="Freaky Video Assistant", page_icon="🎬")
 # 🔹 Display Logo and Title in One Row
 col1, col2 = st.columns([1, 4])
 with col1:
-    logo_url = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/logo.png"  # Replace with actual GitHub URL
+    logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"  # Replace with actual GitHub URL
     st.image(logo_url, width=120)  # Adjust width to make it smaller
 
 with col2:
