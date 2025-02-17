@@ -7,5 +7,5 @@ scikit-learn
 sentence-transformers
 numpy
 requests
-
-# Added a comment to force Streamlit update
+torch
+transformers
