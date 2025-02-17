@@ -1,6 +1,5 @@
 streamlit
 pysrt
-xml.etree.ElementTree
 google-generativeai
 keybert
 scikit-learn
