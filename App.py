@@ -12,13 +12,16 @@ GEMINI_API_KEY = st.secrets["GEMINI"]["API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 
 # 🔹 Set App Title and Logo
-st.set_page_config(page_title="Video Editor AI Assistant", page_icon="🎬")
+st.set_page_config(page_title="Freaky Video Assistant", page_icon="🎬")
 
-# 🔹 Display Logo
-logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"
-st.image(logo_url, use_container_width=True)
+# 🔹 Display Logo and Title in One Row
+col1, col2 = st.columns([1, 4])
+with col1:
+    logo_url = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/NOMBRE_DE_LA_IMAGEN.png"  # Replace with actual GitHub URL
+    st.image(logo_url, width=120)  # Adjust width to make it smaller
 
-st.title("🎬 Video Editor AI Assistant")
+with col2:
+    st.markdown("<h1 style='text-align: left;'>Freaky Video Assistant 🎬</h1>", unsafe_allow_html=True)
 
 def select_segments_with_gemini(transcription, prompt, max_duration):
     """
