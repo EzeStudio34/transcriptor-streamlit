@@ -5,3 +5,5 @@ google-generativeai
 keybert
 scikit-learn
 sentence-transformers
+numpy
+requests
