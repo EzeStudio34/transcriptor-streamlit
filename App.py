@@ -1,78 +1,117 @@
 import streamlit as st
-import json
-import requests
-import os
-import pandas as pd
+import xml.etree.ElementTree as ET
 import pysrt
-from google.generativeai import GenerativeModel
+import tempfile
+import os
+import google.generativeai as genai
 from keybert import KeyBERT
 
-# Configuración de la API de Gemini
+# 🔹 Get Google Gemini API Key from Secrets
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
-# Configuración de la app
-st.set_page_config(page_title="Freaky Video Assistant", layout="wide")
+# 🔹 Configure Google Gemini
+genai.configure(api_key=GEMINI_API_KEY)
 
-# Cargar el logo
-st.markdown(
+# 🔹 Set App Title and Logo
+st.set_page_config(page_title="Freaky Video Assistant", page_icon="🎬")
+
+# 🔹 Display Logo and Title in One Row
+col1, col2 = st.columns([1, 4])
+with col1:
+    logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"
+    st.image(logo_url, width=120)  # Adjust width to make it smaller
+
+with col2:
+    st.markdown("<h1 style='text-align: left;'>Freaky Video Assistant 🎬</h1>", unsafe_allow_html=True)
+
+# 🔹 Function to filter relevant parts using KeyBERT
+def filter_relevant_parts(transcription, prompt):
+    kw_model = KeyBERT()
+    keywords = kw_model.extract_keywords(transcription, keyphrase_ngram_range=(1, 2), top_n=10)
+    
+    relevant_sentences = [sentence for sentence in transcription.split(". ") if any(kw in sentence for kw, _ in keywords)]
+    return " ".join(relevant_sentences)  # Return only relevant sentences
+
+# 🔹 Function to select segments with Gemini
+def select_segments_with_gemini(transcription, prompt, max_duration):
     """
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true" width="50">
-        <h1 style="margin: 0;">Freaky Video Assistant 🎬</h1>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    Uses Google Gemini AI to analyze the transcription and extract the most relevant segments.
+    """
+    model = genai.GenerativeModel("gemini-pro")
 
-# Título de la aplicación
-st.subheader("Upload your SRT file and generate a Premiere-compatible MXL file")
+    prompt_text = f"""
+    You are an expert video editor analyzing a transcription of a long video. 
+    Your task is to extract the most engaging and relevant parts that align with the user's request.
 
-# Subir el archivo SRT
-uploaded_file = st.file_uploader("Choose an SRT file", type=["srt"])
+    **User's request:** {prompt}
 
-# Campo para ingresar el prompt del usuario
-user_prompt = st.text_area(
-    "Describe the theme, tone, and focus for the video selection:",
-    "Extract the most engaging and relevant moments for a short video (up to 90 seconds).",
-)
+    **Filtered Transcription:**
+    {transcription}
 
-# Botón para procesar
-if st.button("Generate MXL File"):
-    if uploaded_file is not None and user_prompt.strip():
+    **Rules for selecting content:**
+    - Select only the most engaging or informative moments.
+    - Ensure a smooth flow between the selected parts.
+    - Keep the total duration under {max_duration} seconds.
+    - Avoid repetitive or redundant segments.
+    - Provide output in plain text without timestamps.
+
+    **Expected output format:**
+    - Provide the extracted text, making sure it forms a coherent short video.
+    - Keep it concise and impactful.
+    """
+
+    response = model.generate_content(prompt_text)
+    
+    return response.text  # Returns the AI's response
+
+def generate_premiere_mxl(segments):
+    """Generates an MXL file compatible with Adobe Premiere markers."""
+    root = ET.Element("mxl")
+    transcription_element = ET.SubElement(root, "transcription")
+    
+    for sub in segments:
+        segment = ET.SubElement(transcription_element, "segment")
+        segment.text = sub.text.replace("\n", " ")
+    
+    temp_mxl_path = os.path.join(tempfile.gettempdir(), "premiere_markers.mxl")
+    
+    with open(temp_mxl_path, "w", encoding="utf-8") as file:
+        file.write(ET.tostring(root, encoding="utf-8").decode("utf-8"))
+    
+    return temp_mxl_path
+
+uploaded_file = st.file_uploader("📂 Upload your .srt file", type=["srt"])
+max_duration = st.slider("⏳ Maximum video duration (seconds)", 15, 90, 60)
+prompt = st.text_area("✏️ Describe what you want in the final video (theme, tone, specific information)")
+
+if uploaded_file and prompt:
+    if st.button("▶️ Run Processing"):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".srt") as temp_srt:
+            temp_srt.write(uploaded_file.read())
+            temp_srt_path = temp_srt.name
+        
+        subs = pysrt.open(temp_srt_path)
+        full_transcription = "\n".join([sub.text.replace("\n", " ") for sub in subs])
+        
         try:
-            # Leer el archivo SRT
-            srt_content = uploaded_file.read().decode("utf-8")
-            subs = pysrt.from_string(srt_content)
-
-            # Convertir SRT en texto plano para el análisis
-            transcript_text = "\n".join([sub.text for sub in subs])
-
-            # Modelo de IA para la selección de contenido
-            model = GenerativeModel("gemini-pro", api_key=GEMINI_API_KEY)
-            response = model.generate_content(f"Analyze this transcription and select the best moments based on this prompt: {user_prompt}\n\n{transcript_text}")
-
-            # Extraer la respuesta de la IA
-            selected_text = response.text
-
-            # Mostrar la previsualización del texto seleccionado
-            st.subheader("Selected Content Preview")
-            st.write(selected_text)
-
-            # Generar un archivo MXL compatible con Adobe Premiere
-            mxl_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-            <mxl>
-                <transcription>{selected_text}</transcription>
-            </mxl>"""
-
-            # Guardar archivo y ofrecer descarga
-            mxl_file = "output.mxl"
-            with open(mxl_file, "w", encoding="utf-8") as f:
-                f.write(mxl_content)
-
-            st.download_button("Download MXL File", data=mxl_content, file_name="output.mxl", mime="application/xml")
-
+            # 🔹 Filter transcription using KeyBERT
+            filtered_transcription = filter_relevant_parts(full_transcription, prompt)
+            
+            # 🔹 Select segments using Gemini
+            selected_segments = select_segments_with_gemini(filtered_transcription, prompt, max_duration)
+            if not selected_segments:
+                st.error("❌ No relevant segments found based on the prompt.")
+            else:
+                # Display AI-selected text preview without timestamps
+                st.subheader("📜 Selected Text Preview:")
+                st.text_area("", selected_segments, height=200)
+                
+                mxl_path = generate_premiere_mxl(subs)
+                
+                with open(mxl_path, "r", encoding="utf-8") as mxl_file:
+                    mxl_content = mxl_file.read()
+                
+                st.success("✅ MXL file successfully generated for Premiere markers.")
+                st.download_button("⬇️ Download MXL for Premiere", data=mxl_content, file_name="premiere_markers.mxl", mime="application/xml")
         except Exception as e:
-            st.error(f"❌ Error generating MXL: {str(e)}")
-    else:
-        st.warning("Please upload an SRT file and enter a prompt before generating the MXL file.")
-
+            st.error(f"❌ Error generating MXL: {e}")
