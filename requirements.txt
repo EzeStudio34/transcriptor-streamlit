@@ -1,5 +1,7 @@
 streamlit
 pysrt
-xmltodict
-lxml
+xml.etree.ElementTree
 google-generativeai
+keybert
+scikit-learn
+sentence-transformers
