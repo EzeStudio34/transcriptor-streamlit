@@ -4,6 +4,7 @@ import pysrt
 import tempfile
 import os
 import google.generativeai as genai
+from keybert import KeyBERT
 
 # 🔹 Get Google Gemini API Key from Secrets
 GEMINI_API_KEY = st.secrets["GEMINI"]["API_KEY"]
@@ -17,12 +18,21 @@ st.set_page_config(page_title="Freaky Video Assistant", page_icon="🎬")
 # 🔹 Display Logo and Title in One Row
 col1, col2 = st.columns([1, 4])
 with col1:
-    logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"  # Replace with actual GitHub URL
+    logo_url = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/logo.png"  # Replace with actual GitHub URL
     st.image(logo_url, width=120)  # Adjust width to make it smaller
 
 with col2:
     st.markdown("<h1 style='text-align: left;'>Freaky Video Assistant 🎬</h1>", unsafe_allow_html=True)
 
+# 🔹 Function to filter relevant parts using KeyBERT
+def filter_relevant_parts(transcription, prompt):
+    kw_model = KeyBERT()
+    keywords = kw_model.extract_keywords(transcription, keyphrase_ngram_range=(1, 2), top_n=10)
+    
+    relevant_sentences = [sentence for sentence in transcription.split(". ") if any(kw in sentence for kw, _ in keywords)]
+    return " ".join(relevant_sentences)  # Return only relevant sentences
+
+# 🔹 Function to select segments with Gemini
 def select_segments_with_gemini(transcription, prompt, max_duration):
     """
     Uses Google Gemini AI to analyze the transcription and extract the most relevant segments.
@@ -30,9 +40,26 @@ def select_segments_with_gemini(transcription, prompt, max_duration):
     model = genai.GenerativeModel("gemini-pro")
     
     response = model.generate_content(
-        f"Here is a transcription:\n{transcription}\n\nBased on the following user request: '{prompt}', "
-        f"select the most relevant segments without exceeding {max_duration} seconds. "
-        f"Provide the timestamps and key dialogue from the text."
+        f"""You are an expert video editor analyzing a transcription of a long video. 
+        Your task is to extract the most engaging and relevant parts that align with the user's request.
+
+        **User's request:** {prompt}
+
+        **Filtered Transcription:**
+        {transcription}
+
+        **Rules for selecting content:**
+        - Select only the most engaging or informative moments.
+        - Ensure a smooth flow between the selected parts.
+        - Keep the total duration under {max_duration} seconds.
+        - Avoid repetitive or redundant segments.
+        - Provide output in plain text without timestamps.
+
+        **Expected output format:**
+        - Provide the extracted text, making sure it forms a coherent short video.
+        - Keep it concise and impactful.
+        """,
+        temperature=0.5  # Lower temperature makes responses more structured
     )
     
     return response.text  # Returns the AI's response
@@ -71,7 +98,11 @@ if uploaded_file and prompt:
         full_transcription = "\n".join([sub.text.replace("\n", " ") for sub in subs])
         
         try:
-            selected_segments = select_segments_with_gemini(full_transcription, prompt, max_duration)
+            # 🔹 Filter transcription using KeyBERT
+            filtered_transcription = filter_relevant_parts(full_transcription, prompt)
+            
+            # 🔹 Select segments using Gemini
+            selected_segments = select_segments_with_gemini(filtered_transcription, prompt, max_duration)
             if not selected_segments:
                 st.error("❌ No relevant segments found based on the prompt.")
             else:
