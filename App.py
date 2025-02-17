@@ -18,7 +18,7 @@ st.set_page_config(page_title="Freaky Video Assistant", page_icon="🎬")
 # 🔹 Display Logo and Title in One Row
 col1, col2 = st.columns([1, 4])
 with col1:
-    logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"  # Replace with actual GitHub URL
+    logo_url = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/logo.png"  # Replace with actual GitHub URL
     st.image(logo_url, width=120)  # Adjust width to make it smaller
 
 with col2:
@@ -38,29 +38,29 @@ def select_segments_with_gemini(transcription, prompt, max_duration):
     Uses Google Gemini AI to analyze the transcription and extract the most relevant segments.
     """
     model = genai.GenerativeModel("gemini-pro")
-    
-    response = model.generate_content(
-        f"""You are an expert video editor analyzing a transcription of a long video. 
-        Your task is to extract the most engaging and relevant parts that align with the user's request.
 
-        **User's request:** {prompt}
+    prompt_text = f"""
+    You are an expert video editor analyzing a transcription of a long video. 
+    Your task is to extract the most engaging and relevant parts that align with the user's request.
 
-        **Filtered Transcription:**
-        {transcription}
+    **User's request:** {prompt}
 
-        **Rules for selecting content:**
-        - Select only the most engaging or informative moments.
-        - Ensure a smooth flow between the selected parts.
-        - Keep the total duration under {max_duration} seconds.
-        - Avoid repetitive or redundant segments.
-        - Provide output in plain text without timestamps.
+    **Filtered Transcription:**
+    {transcription}
 
-        **Expected output format:**
-        - Provide the extracted text, making sure it forms a coherent short video.
-        - Keep it concise and impactful.
-        """,
-        temperature=0.5  # Lower temperature makes responses more structured
-    )
+    **Rules for selecting content:**
+    - Select only the most engaging or informative moments.
+    - Ensure a smooth flow between the selected parts.
+    - Keep the total duration under {max_duration} seconds.
+    - Avoid repetitive or redundant segments.
+    - Provide output in plain text without timestamps.
+
+    **Expected output format:**
+    - Provide the extracted text, making sure it forms a coherent short video.
+    - Keep it concise and impactful.
+    """
+
+    response = model.generate_content(prompt_text)  # ✅ Se eliminó "temperature"
     
     return response.text  # Returns the AI's response
 
