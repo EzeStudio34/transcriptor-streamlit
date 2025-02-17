@@ -17,7 +17,7 @@ st.set_page_config(page_title="Freaky Video Assistant", layout="wide")
 st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="https://raw.githubusercontent.com/TU_REPOSITORIO/logo.png" width="50">
+        <img src="https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true" width="50">
         <h1 style="margin: 0;">Freaky Video Assistant 🎬</h1>
     </div>
     """,
