@@ -77,7 +77,7 @@ def generate_premiere_fcpxml(segments):
         marker = ET.SubElement(spine, "marker", start=f"{sub.start.ordinal // 1000}s", duration="1s")
         marker.text = sub.text.replace("\n", " ")
 
-    temp_fcpxml_path = os.path.join(tempfile.gettempdir(), "premiere_markers.fcpxml")
+    temp_fcpxml_path = os.path.join(tempfile.gettempdir(), "premiere_markers.mxl")
     
     with open(temp_fcpxml_path, "w", encoding="utf-8") as file:
         file.write(ET.tostring(root, encoding="utf-8").decode("utf-8"))
@@ -116,6 +116,6 @@ if uploaded_file and prompt:
                     fcpxml_content = fcpxml_file.read()
                 
                 st.success("✅ FCPXML file successfully generated for Premiere markers.")
-                st.download_button("⬇️ Download FCPXML for Premiere", data=fcpxml_content, file_name="premiere_markers.fcpxml", mime="application/xml")
+                st.download_button("⬇️ Download FCPXML for Premiere", data=fcpxml_content, file_name="premiere_markers.mxl", mime="application/mxl")
         except Exception as e:
             st.error(f"❌ Error generating FCPXML: {e}")
