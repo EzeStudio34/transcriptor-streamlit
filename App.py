@@ -15,7 +15,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 st.set_page_config(page_title="Video Editor AI Assistant", page_icon="🎬")
 
 # 🔹 Display Logo
-logo_url = "https://drive.google.com/uc?export=view&id=1XlHZiaiMfskhQU23c8H8GyC-mq9FjwaN"
+logo_url = "https://github.com/EzeStudio34/transcriptor-streamlit/blob/main/Studio34_Logos_S34_White.png?raw=true"
 st.image(logo_url, use_container_width=True)
 
 st.title("🎬 Video Editor AI Assistant")
