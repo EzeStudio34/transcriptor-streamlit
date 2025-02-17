@@ -72,10 +72,9 @@ if uploaded_file and prompt:
             if not selected_segments:
                 st.error("❌ No relevant segments found based on the prompt.")
             else:
-                # Display selected text preview without timestamps
+                # Display AI-selected text preview without timestamps
                 st.subheader("📜 Selected Text Preview:")
-                selected_text = "\n\n".join([sub.text.replace("\n", " ") for sub in subs])
-                st.text_area("", selected_text, height=200)
+                st.text_area("", selected_segments, height=200)
                 
                 fcpxml_path = generate_premiere_fcpxml(subs)
                 
